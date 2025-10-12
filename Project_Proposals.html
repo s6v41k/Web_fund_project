@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Proposals — Vsevolod Poltavskyi</title>
+  <style>
+    :root{
+      --bg1: #091a2b;
+      --bg2: #132b44;
+      --card1: #0b1528;
+      --card2: #15263f;
+      --accent1: #00b3ff;
+      --accent2: #ff7a00;
+      --accent3: #00ffa2;
+      --muted: #9aa4b2;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#e6eef8;background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);}
+    header{padding:48px 24px;text-align:center;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    header h1{margin:0;font-size:34px;letter-spacing:0.3px}
+    header p{margin:6px 0 0;color:#d3e2f9}
+    main{max-width:1000px;margin:28px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .card{background:linear-gradient(145deg,var(--card1),var(--card2));border-radius:14px;padding:20px;box-shadow:0 10px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.08);transition:transform .2s ease, box-shadow .2s ease;}
+    .card:hover{transform:translateY(-4px);box-shadow:0 12px 50px rgba(0,0,0,0.6)}
+    .card h2{margin:0 0 8px;font-size:21px;background:linear-gradient(90deg,var(--accent1),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .section-title{margin:14px 0 6px;color:var(--accent2); font-weight:700}
+    ul{margin:8px 0 0;padding-left:18px}
+    .logo{width:100%;height:160px;border-radius:10px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;letter-spacing:1px;text-shadow:0 0 10px rgba(0,0,0,0.5);}
+    .logo.finance{background:linear-gradient(120deg,#00b3ff,#00ffa2);}
+    .logo.fitness{background:linear-gradient(120deg,#ff7a00,#ffbb00);}
+    footer{max-width:1000px;margin:28px auto;text-align:center;color:#8ea1c4;font-size:14px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Final Project Proposals</h1>
+    <p>Two independent ideas — one in Finance, one in Sports</p>
+    <p style="margin-top:8px;color:#d3e2f9">Prepared by <strong>Vsevolod Poltavskyi</strong> — r1036919 • 2025</p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- Proposal A: FinTracker -->
+      <article class="card" id="fintracker">
+        <div class="logo finance">FinTracker</div>
+        <h2>FinTracker — Your Smart Spending Coach</h2>
+
+        <div class="section-title">Idea</div>
+        <div>A web application that helps users track expenses and set financial goals, offering personalized advice based on their spending habits.</div>
+
+        <div class="section-title">Main Feature</div>
+        <div>Expense analysis by category and automatic recommendations (e.g.: “You spend €80 a month on coffee — here’s where you can save.”)</div>
+
+        <div class="section-title">Problem & Target Audience</div>
+        <div>Many young people lose track of small recurring expenses and don’t have an easy plan to reach short-term goals (travel, equipment, subscriptions). Target audience: students, young professionals, and budget-conscious users.</div>
+
+        <div class="section-title">Core Features (MVP)</div>
+        <ul>
+          <li>Account creation & secure login (JWT + password hashing).</li>
+          <li>Bank-like ledger: add expenses & incomes manually; categorize transactions.</li>
+          <li>Simple goals: set a target and track progress (e.g.: "Save €200 for new boots").</li>
+          <li>Dashboard: monthly summary, category pie chart, top recurring spenders.</li>
+          <li>Transaction list with search, filters, and CRUD operations.</li>
+          <li>Owner/admin dashboard: manage users, flag suspicious data, statistics.</li>
+        </ul>
+      </article>
+
+      <!-- Proposal B: FitBattle -->
+      <article class="card" id="fitbattle">
+        <div class="logo fitness">FitBattle</div>
+        <h2>FitBattle — Challenge Your Friends</h2>
+
+        <div class="section-title">Idea</div>
+        <div>A social fitness app where users set personal goals (e.g.: “Run 10 km per week”) and compete with friends in challenges.</div>
+
+        <div class="section-title">Main Feature</div>
+        <div>Rankings, achievements, and integration with fitness trackers (e.g.: "You beat your friend John on this distance").</div>
+
+        <div class="section-title">Problem & Target Audience</div>
+        <div>Many people start fitness routines but lose motivation. Gamification and social accountability help. Target audience: amateur athletes, gym-goers, friends groups, and university sports teams.</div>
+
+        <div class="section-title">Core Features (MVP)</div>
+        <ul>
+          <li>User accounts & profile (strength levels, preferred sports).</li>
+          <li>Create or join challenges (time-based or goal-based: e.g.: "Run 20 km in 2 weeks").</li>
+          <li>Log activities manually or via CSV upload; optional Strava/Google Fit sync later.</li>
+          <li>Leaderboard & progress feed; comments and emojis for social motivation.</li>
+          <li>Admin dashboard: manage challenges, moderate content, export stats.</li>
+        </ul>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <p>Prepared for final project submission — Vsevolod Poltavskyi • r1036919 • 2025</p>
+  </footer>
+</body>
+</html>
