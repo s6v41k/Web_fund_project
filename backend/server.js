@@ -1,24 +1,38 @@
-// server.js - Main Express server
+// server.js - Main Express server for FinTracker
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
 
-dotenv.config();  // Load .env
-
-const authRoutes = require('./routes/auth');  // Import auth
-const transactionRoutes = require('./routes/transactions');  // We'll add later
+// Load environment variables from .env
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
-app.use(cors({ origin: 'http://localhost:5173' }));  // For frontend later
-app.use(express.json());
+// Import routes (auth is ready, transactions later)
+const authRoutes = require('./routes/auth');
+// const transactionRoutes = require('./routes/transactions');
 
-app.use('/api/auth', authRoutes);  // Mount auth routes
-app.use('/api/transactions', transactionRoutes);  // Placeholder
+// Middleware
+app.use(helmet());  // Security headers
+app.use(cors({ origin: 'http://localhost:5173' }));  // Allow frontend requests
+app.use(express.json({ limit: '10mb' }));  // Parse JSON bodies
 
-app.use((req, res) => res.status(404).json({ error: 'Route not found' }));  // 404 handler
+// Mount routes
+app.use('/api/auth', authRoutes);
+// app.use('/api/transactions', transactionRoutes);
 
-app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+// Test route for debugging
+app.get('/test', (req, res) => res.json({ message: 'Server OK' }));
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log('Routes loaded: auth at /api/auth');
+});
