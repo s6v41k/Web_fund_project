@@ -16,7 +16,7 @@ const transactionRoutes = require('./routes/transactions');
 
 // Middleware
 app.use(helmet());  // Security headers
-app.use(cors({ origin: 'http://localhost:5173' }));  // Allow frontend requests
+app.use(cors({ origin: true }));  // Allow any frontend requests
 app.use(express.json({ limit: '10mb' }));  // Parse JSON bodies
 
 // Mount routes
