@@ -111,7 +111,7 @@ onMounted(async () => {
 const fetchTransactions = async () => {
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3001/api/transactions', {
+    const res = await axios.get('http://localhost:3000/api/transactions', {
       headers: { Authorization: `Bearer ${token}` }
     });
     transactions.value = res.data;
@@ -133,12 +133,12 @@ const handleSubmit = async () => {
     const data = { amount: parseFloat(form.value.amount), category: form.value.category, description: form.value.description };
     if (editingId.value) {
       // Update
-      await axios.put(`http://localhost:3001/api/transactions/${editingId.value}`, data, {
+      await axios.put(`http://localhost:3000/api/transactions/${editingId.value}`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } else {
       // Add
-      await axios.post('http://localhost:3001/api/transactions', data, {
+      await axios.post('http://localhost:3000/api/transactions', data, {
         headers: { Authorization: `Bearer ${token}` }
       });
     }
@@ -169,7 +169,7 @@ const deleteTransaction = async (id) => {
   if (!confirm('Delete this transaction?')) return;
   try {
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:3001/api/transactions/${id}`, {
+    await axios.delete(`http://localhost:3000/api/transactions/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     await fetchTransactions();  // Refresh

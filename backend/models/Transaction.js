@@ -1,14 +1,28 @@
-// models/Transaction.js - CRUD operations for transactions
-const pool = require('../db');
+// models/Transaction.js - Prisma-based CRUD for transactions
+const { PrismaClient } = require('@prisma/client');
 
-// Create a new transaction
+// Initialize PrismaClient with explicit options for dev
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
+
+// Create a new transaction for user
 const create = async (userId, amount, category, description) => {
   try {
-    const [result] = await pool.execute(
-      'INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)',
-      [userId, amount, category, description]
-    );
-    return result.insertId;
+    const transaction = await prisma.transaction.create({
+      data: {
+        userId,
+        amount,
+        category,
+        description
+      }
+    });
+    return transaction.id;
   } catch (error) {
     throw new Error(`Transaction creation failed: ${error.message}`);
   }
@@ -17,11 +31,10 @@ const create = async (userId, amount, category, description) => {
 // Get all by user
 const getAllByUser = async (userId) => {
   try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC',
-      [userId]
-    );
-    return rows;
+    return await prisma.transaction.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
   } catch (error) {
     throw new Error(`Fetching failed: ${error.message}`);
   }
@@ -30,10 +43,10 @@ const getAllByUser = async (userId) => {
 // Update by ID
 const update = async (id, amount, category, description) => {
   try {
-    await pool.execute(
-      'UPDATE transactions SET amount = ?, category = ?, description = ? WHERE id = ?',
-      [amount, category, description, id]
-    );
+    await prisma.transaction.update({
+      where: { id },
+      data: { amount, category, description }
+    });
   } catch (error) {
     throw new Error(`Update failed: ${error.message}`);
   }
@@ -42,7 +55,9 @@ const update = async (id, amount, category, description) => {
 // Delete by ID
 const remove = async (id) => {
   try {
-    await pool.execute('DELETE FROM transactions WHERE id = ?', [id]);
+    await prisma.transaction.delete({
+      where: { id }
+    });
   } catch (error) {
     throw new Error(`Delete failed: ${error.message}`);
   }

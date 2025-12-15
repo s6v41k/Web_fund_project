@@ -5,7 +5,7 @@ const mysql = require('mysql2/promise');  // Promise-based MySQL driver for clea
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',  // DB server address
   user: process.env.DB_USER || 'root',       // DB username
-  password: process.env.DB_PASS || '',       // DB password (from .env)
+  password: process.env.DB_PASS || 'root',       // DB password (from .env)
   database: process.env.DB_NAME || 'fintracker',  // Our database name
   waitForConnections: true,    // Wait if no connections available
   connectionLimit: 10,         // Max connections in pool

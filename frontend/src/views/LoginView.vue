@@ -1,4 +1,4 @@
-<!-- src/views/LoginView.vue - Login/Register form with API integration -->
+<!-- src/views/LoginView.vue - Login/Register form with API integration and specific errors -->
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -51,39 +51,90 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import { useUserStore } from '../stores/user';  // Pinia store (создадим позже)
+import { useUserStore } from '../stores/user';
 
 const router = useRouter();
 const userStore = useUserStore();
 
 // Reactive form data
 const form = reactive({ email: '', password: '' });
-const errors = ref({});
+const errors = ref({ email: '', password: '', general: '' });
 const loading = ref(false);
 const isRegister = ref(false);  // Toggle between login/register
 
 // Toggle mode
 const toggleMode = () => {
   isRegister.value = !isRegister.value;
-  errors.value = {};  // Clear errors
+  errors.value = { email: '', password: '', general: '' };  // Clear errors
+};
+
+// Client-side validation functions
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return 'Invalid email format (must be a valid email like user@gmail.com)';
+  }
+  return '';
+};
+
+const validatePassword = (password) => {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain at least one lowercase letter (a-z)';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter (A-Z)';
+  }
+  if (!/[!@#$%^&*()_+]/.test(password)) {
+    return 'Password must contain at least one special character (!@#$%^&*()_+)';
+  }
+  return '';
 };
 
 // Handle submit (login or register)
 const handleSubmit = async () => {
-  errors.value = {};
+  // Client-side validation
+  errors.value = { email: '', password: '', general: '' };
+
+  const emailError = validateEmail(form.email);
+  if (emailError) {
+    errors.value.email = emailError;
+    return;
+  }
+
+  const passwordError = validatePassword(form.password);
+  if (passwordError) {
+    errors.value.password = passwordError;
+    return;
+  }
+
   loading.value = true;
 
   try {
     const endpoint = isRegister.value ? '/register' : '/login';
-    const res = await axios.post(`http://localhost:3001/api/auth${endpoint}`, form);
+    const res = await axios.post(`http://localhost:3000/api/auth${endpoint}`, form);
     localStorage.setItem('token', res.data.token);  // Save token
     userStore.setUser(res.data.userId);  // Update store
     router.push('/dashboard');  // Redirect to dashboard
   } catch (err) {
-    if (err.response?.status === 400 || err.response?.status === 401) {
-      errors.value = { general: err.response.data.error || 'Invalid email or password' };
+    const status = err.response?.status;
+    const backendError = err.response?.data?.error;
+
+    if (status === 400) {
+      // Parse Joi errors for specific fields
+      if (backendError.includes('email')) {
+        errors.value.email = backendError;
+      } else if (backendError.includes('password')) {
+        errors.value.password = backendError;
+      } else {
+        errors.value.general = backendError;
+      }
+    } else if (status === 401) {
+      errors.value.general = 'Invalid email or password';
     } else {
-      errors.value = { general: 'Something went wrong. Try again.' };
+      errors.value.general = 'Server error. Please try again.';
     }
   } finally {
     loading.value = false;
