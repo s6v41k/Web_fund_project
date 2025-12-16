@@ -23,6 +23,11 @@ const router = createRouter({
       path: '/admin', 
       component: () => import('../views/AdminView.vue'), 
       meta: { requiresAuth: true, requiresAdmin: true }  // Protected for admin
+    },
+    { 
+      path: '/goals', 
+      component: () => import('../views/GoalsView.vue'), 
+      meta: { requiresAuth: true }  // Protected
     }
   ]
 });

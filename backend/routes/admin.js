@@ -1,34 +1,47 @@
-// models/User.js - User-related database operations with bcrypt for password hashing
-const pool = require('../db');  // Import DB pool from db.js
-const bcrypt = require('bcryptjs');  // Library for secure password hashing/salting
+// routes/admin.js - Admin routes for user management and stats (protected for admin role)
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { getAllUsers, updateUserRole } = require('../models/User');
 
-// Create a new user: hash password and insert into DB
-const createUser = async (email, password) => {
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+
+// Middleware to verify token and admin role
+const adminAuth = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const hashedPw = await bcrypt.hash(password, 10);  // Generate hash (10 salt rounds)
-    const [result] = await pool.execute(
-      'INSERT INTO users (email, password) VALUES (?, ?)',
-      [email, hashedPw]
-    );
-    return result.insertId;
-  } catch (error) {
-    throw new Error(`User creation failed: ${error.message}`);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    // Check role (fetch user from DB)
+    // For demo: assume admin if userId=1 (create admin in DB)
+    if (req.userId !== 1) return res.status(403).json({ error: 'Admin access required' });
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-// Find user by email
-const findUserByEmail = async (email) => {
+// GET /api/admin/users - List all users
+router.get('/users', adminAuth, async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    return rows[0];
-  } catch (error) {
-    throw new Error(`User lookup failed: ${error.message}`);
+    const users = await getAllUsers();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-};
+});
 
-// Compare plain password with hashed one
-const comparePassword = async (password, hashed) => {
-  return await bcrypt.compare(password, hashed);
-};
+// PUT /api/admin/users/:id/role - Update user role
+router.put('/users/:id/role', adminAuth, async (req, res) => {
+  try {
+    const { role } = req.body;  // 'user' or 'admin'
+    if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+    await updateUserRole(req.params.id, role);
+    res.json({ message: 'Role updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-module.exports = { createUser, findUserByEmail, comparePassword };
+module.exports = router;
