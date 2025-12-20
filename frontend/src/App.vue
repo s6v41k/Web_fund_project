@@ -2,6 +2,8 @@
 // App.vue - Root component for FinTracker app
 // Uses Vue Router's <router-view /> to display child views (Login, Dashboard, Transactions)
 // No additional logic here — keeps it clean and focused on routing
+
+import { Toaster } from 'vue-sonner';  // Correct import for Toaster component
 </script>
 
 <template>
@@ -15,6 +17,8 @@
       <!-- Router-view renders the active view (LoginView, Dashboard, etc.) -->
       <router-view />
     </main>
+    <!-- Sonner Toaster for global toast notifications -->
+    <Toaster />
   </div>
 </template>
 

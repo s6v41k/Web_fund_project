@@ -18,7 +18,7 @@
           />
           <span v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email }}</span>
         </div>
-        <div>
+        <div v-if="!isForgot">
           <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
           <input
             v-model="form.password"
@@ -42,6 +42,9 @@
         <button type="button" @click="toggleMode" class="w-full text-sm text-indigo-600 hover:text-indigo-500">
           {{ isRegister ? 'Already have account? Login' : 'New user? Register' }}
         </button>
+        <button type="button" @click="toggleForgot" class="w-full text-sm text-indigo-600 hover:text-indigo-500">
+          {{ isForgot ? 'Back to Login' : 'Forgot Password?' }}
+        </button>
       </form>
     </div>
   </div>
@@ -61,10 +64,19 @@ const form = reactive({ email: '', password: '' });
 const errors = ref({ email: '', password: '', general: '' });
 const loading = ref(false);
 const isRegister = ref(false);  // Toggle between login/register
+const isForgot = ref(false);  // Toggle for forgot password
 
 // Toggle mode
 const toggleMode = () => {
   isRegister.value = !isRegister.value;
+  isForgot.value = false;  // Reset forgot mode
+  errors.value = { email: '', password: '', general: '' };  // Clear errors
+};
+
+// Toggle forgot password mode
+const toggleForgot = () => {
+  isForgot.value = !isForgot.value;
+  isRegister.value = false;  // Reset register mode
   errors.value = { email: '', password: '', general: '' };  // Clear errors
 };
 
@@ -95,6 +107,11 @@ const validatePassword = (password) => {
 
 // Handle submit (login or register)
 const handleSubmit = async () => {
+  if (isForgot) {
+    handleForgot();
+    return;
+  }
+
   // Client-side validation
   errors.value = { email: '', password: '', general: '' };
 
@@ -136,6 +153,29 @@ const handleSubmit = async () => {
     } else {
       errors.value.general = 'Server error. Please try again.';
     }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Handle forgot password (send reset email)
+const handleForgot = async () => {
+  // Client-side validation
+  errors.value = { email: '', general: '' };
+
+  const emailError = validateEmail(form.email);
+  if (emailError) {
+    errors.value.email = emailError;
+    return;
+  }
+
+  loading.value = true;
+
+  try {
+    await axios.post('http://localhost:3000/api/auth/forgot-password', { email: form.email });
+    errors.value.general = 'Reset email sent. Check your inbox.';
+  } catch (err) {
+    errors.value.general = err.response?.data?.error || 'Failed to send reset email';
   } finally {
     loading.value = false;
   }

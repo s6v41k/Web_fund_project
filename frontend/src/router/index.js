@@ -28,7 +28,12 @@ const router = createRouter({
       path: '/goals', 
       component: () => import('../views/GoalsView.vue'), 
       meta: { requiresAuth: true }  // Protected
-    }
+    },
+    { 
+      path: '/profile', 
+      component: () => import('../views/ProfileView.vue'), 
+      meta: { requiresAuth: true }  // Protected
+}
   ]
 });
 

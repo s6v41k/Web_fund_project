@@ -92,6 +92,14 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', err);  // Log for debugging
     res.status(500).json({ error: 'Login failed. Please try again.' });
   }
+
+  const { google } = require('googleapis');
+  const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  'http://localhost:3000'
+  );
+// Use oauth2Client for sending (more code, but secure)
 });
 
 module.exports = router;

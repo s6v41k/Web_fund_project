@@ -41,6 +41,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+const profileRoutes = require('./routes/profile');
+app.use('/api/profile', profileRoutes);
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

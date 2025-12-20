@@ -1,4 +1,4 @@
-<!-- src/views/Dashboard.vue - Dashboard with charts (pie for categories, line for monthly totals) -->
+<!-- src/views/Dashboard.vue - Dashboard with charts (pie for categories, line for monthly totals) and goals progress -->
 <template>
   <div class="p-6">
     <h1 class="text-3xl font-bold mb-4 text-gray-900">Dashboard</h1>
@@ -25,15 +25,34 @@
         </div>
       </div>
       <!-- Line Chart: Monthly totals -->
-      <div class="bg-white p-4 rounded shadow-md">
+      <div class="bg-white p-4 rounded shadow-md mb-6">
         <h2 class="text-xl font-semibold mb-4">Monthly Expenses Trend</h2>
         <div class="chart-container">
           <Line v-if="monthlyData.labels.length" :data="monthlyData" :options="chartOptions" />
           <p v-else class="text-gray-500">No data for chart</p>
         </div>
       </div>
+      <!-- Goals Progress -->
+      <div class="bg-white p-4 rounded shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4">Goals Progress</h2>
+        <div v-if="goalProgress.length" class="space-y-4">
+          <div v-for="goal in goalProgress" :key="goal.id" class="mb-4">
+            <p class="font-semibold">{{ goal.category }}: €{{ goal.current_amount.toFixed(2) }} / €{{ goal.target_amount }} ({{ goal.percentage }}%)</p>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div class="bg-green-600 h-2.5 rounded-full" :style="{ width: goal.percentage + '%' }"></div>
+            </div>
+          </div>
+        </div>
+        <p v-else class="text-gray-500">No goals yet. Create some in Goals view!</p>
+        <router-link to="/goals" class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+          Manage Goals
+        </router-link>
+      </div>
       <router-link to="/transactions" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         Manage Transactions
+      </router-link>
+      <router-link to="/profile" class="mt-2 inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+        Profile
       </router-link>
     </div>
   </div>
@@ -56,14 +75,17 @@ import {
   PointElement,
   LineElement
 } from 'chart.js';
+import { useSonner } from 'vue-sonner';  // Sonner composable for Vue 3
 
 // Register Chart.js components (English comments for clarity)
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const router = useRouter();
 const userStore = useUserStore();
+const { toast } = useSonner();  // Sonner toast instance
 
 const transactions = ref([]);
+const goals = ref([]);
 const loading = ref(true);
 const error = ref('');
 
@@ -76,7 +98,7 @@ const chartOptions = {
   }
 };
 
-// Fetch transactions on mount
+// Fetch transactions and goals on mount
 onMounted(async () => {
   if (!userStore.isAuthenticated()) {
     router.push('/login');
@@ -84,17 +106,52 @@ onMounted(async () => {
   }
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/transactions', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    transactions.value = res.data;
+    const [transRes, goalRes] = await Promise.all([
+      axios.get('http://localhost:3000/api/transactions', { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/goals', { headers: { Authorization: `Bearer ${token}` } })
+    ]);
+    transactions.value = transRes.data;
+    goals.value = goalRes.data;
+    await updateGoalAmounts();  // Update current_amount based on transactions
   } catch (err) {
-    error.value = err.response?.data?.error || 'Failed to fetch transactions';
+    error.value = err.response?.data?.error || 'Failed to fetch data';
     if (err.response?.status === 401) router.push('/login');
   } finally {
     loading.value = false;
   }
 });
+
+// Update goal current_amount based on recent transactions (sum by category)
+const updateGoalAmounts = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    for (const goal of goals.value) {
+      const catSum = transactions.value
+        .filter(t => t.category === goal.category)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      await axios.put(`http://localhost:3000/api/goals/${goal.id}`, { currentAmount: catSum }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+    // Refresh goals
+    const res = await axios.get('http://localhost:3000/api/goals', { headers: { Authorization: `Bearer ${token}` } });
+    goals.value = res.data;
+  } catch (err) {
+    console.error('Update goals error:', err);
+  }
+};
+
+// Check for exceeded goals (toast warning)
+const checkExceededGoals = () => {
+  goalProgress.value.forEach(goal => {
+    if (goal.percentage > 100) {
+      toast.warning(`Goal exceeded for ${goal.category}! (€${goal.current_amount.toFixed(2)} / €${goal.target_amount})`);
+    }
+  });
+};
+
+// Call after update (inside onMounted)
+checkExceededGoals();
 
 // Computed: Total amount
 const totalAmount = computed(() => {
@@ -138,6 +195,14 @@ const monthlyData = computed(() => {
       tension: 0.1
     }]
   };
+});
+
+// Computed: Goal progress
+const goalProgress = computed(() => {
+  return goals.value.map(goal => ({
+    ...goal,
+    percentage: Math.min((goal.current_amount / goal.target_amount * 100), 100)
+  }));
 });
 </script>
 

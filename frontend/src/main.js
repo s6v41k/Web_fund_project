@@ -1,13 +1,16 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
-import App from './App.vue'
-import router from './router'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import router from './router';
 import './style.css';
 
-const app = createApp(App)
+// Vue-Sonner toast plugin (default import for Vue 3)
+import Sonner from 'vue-sonner';
 
-app.use(createPinia())
-app.use(router)
+const app = createApp(App);
 
-app.mount('#app')
+app.use(createPinia());
+app.use(router);
+app.use(Sonner);  // Global toast provider
+
+app.mount('#app');
