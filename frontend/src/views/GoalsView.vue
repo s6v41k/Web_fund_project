@@ -73,7 +73,7 @@ onMounted(async () => {
 const fetchGoals = async () => {
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/goals', {
+    const res = await axios.get('http://localhost:5000/api/goals', {
       headers: { Authorization: `Bearer ${token}` }
     });
     goals.value = res.data;
@@ -91,7 +91,7 @@ const createGoal = async () => {
   error.value = '';
   try {
     const token = localStorage.getItem('token');
-    await axios.post('http://localhost:3000/api/goals', newGoal.value, {
+    await axios.post('http://localhost:5000/api/goals', newGoal.value, {
       headers: { Authorization: `Bearer ${token}` }
     });
     newGoal.value = { category: '', targetAmount: '' };
@@ -108,7 +108,7 @@ const deleteGoal = async (id) => {
   if (!confirm('Delete this goal?')) return;
   try {
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:3000/api/goals/${id}`, {
+    await axios.delete(`http://localhost:5000/api/goals/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     await fetchGoals();

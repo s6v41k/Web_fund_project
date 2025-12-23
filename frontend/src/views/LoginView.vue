@@ -107,7 +107,7 @@ const validatePassword = (password) => {
 
 // Handle submit (login or register)
 const handleSubmit = async () => {
-  if (isForgot) {
+  if (isForgot.value) {
     handleForgot();
     return;
   }
@@ -131,7 +131,7 @@ const handleSubmit = async () => {
 
   try {
     const endpoint = isRegister.value ? '/register' : '/login';
-    const res = await axios.post(`http://localhost:3000/api/auth${endpoint}`, form);
+    const res = await axios.post(`http://localhost:5000/api/auth${endpoint}`, form);
     localStorage.setItem('token', res.data.token);  // Save token
     userStore.setUser(res.data.userId);  // Update store
     router.push('/dashboard');  // Redirect to dashboard
@@ -172,7 +172,7 @@ const handleForgot = async () => {
   loading.value = true;
 
   try {
-    await axios.post('http://localhost:3000/api/auth/forgot-password', { email: form.email });
+    await axios.post('http://localhost:5000/api/auth/forgot-password', { email: form.email });
     errors.value.general = 'Reset email sent. Check your inbox.';
   } catch (err) {
     errors.value.general = err.response?.data?.error || 'Failed to send reset email';

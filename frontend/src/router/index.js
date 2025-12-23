@@ -33,7 +33,12 @@ const router = createRouter({
       path: '/profile', 
       component: () => import('../views/ProfileView.vue'), 
       meta: { requiresAuth: true }  // Protected
-}
+    },
+    { 
+      path: '/reset-password', 
+      component: () => import('../views/ResetPasswordView.vue') 
+    },
+    { path: '/verify', component: () => import('../views/VerifyView.vue') }
   ]
 });
 

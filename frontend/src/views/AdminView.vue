@@ -61,7 +61,7 @@ onMounted(async () => {
   }
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/admin/users', {
+    const res = await axios.get('http://localhost:5000/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` }
     });
     users.value = res.data;
@@ -77,7 +77,7 @@ onMounted(async () => {
 const updateRole = async (id, role) => {
   try {
     const token = localStorage.getItem('token');
-    await axios.put(`http://localhost:3000/api/admin/users/${id}/role`, { role }, {
+    await axios.put(`http://localhost:5000/api/admin/users/${id}/role`, { role }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     // Refresh list
@@ -91,7 +91,7 @@ const updateRole = async (id, role) => {
 const fetchUsers = async () => {
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/admin/users', {
+    const res = await axios.get('http://localhost:5000/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` }
     });
     users.value = res.data;
@@ -105,7 +105,7 @@ const deleteUser = async (id) => {
   if (!confirm('Delete this user?')) return;
   try {
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:3000/api/admin/users/${id}`, {
+    await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     await fetchUsers();

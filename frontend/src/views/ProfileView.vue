@@ -53,7 +53,7 @@ onMounted(async () => {
   }
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/profile', {
+    const res = await axios.get('http://localhost:5000/api/profile', {
       headers: { Authorization: `Bearer ${token}` }
     });
     profile.value = res.data;
@@ -72,7 +72,7 @@ const updateProfile = async () => {
   error.value = '';
   try {
     const token = localStorage.getItem('token');
-    await axios.put('http://localhost:3000/api/profile', editForm.value, {
+    await axios.put('http://localhost:5000/api/profile', editForm.value, {
       headers: { Authorization: `Bearer ${token}` }
     });
     profile.value.email = editForm.value.email;

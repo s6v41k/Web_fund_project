@@ -1,24 +1,24 @@
 // server.js - Main Express server for FinTracker
+require('dotenv').config();  // Load .env variables first
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const dotenv = require('dotenv');
 
 // Load environment variables from .env
-dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;  // Use .env or default to 3000
+const PORT = process.env.PORT || 5000;  // From .env or fallback to 5000
 
 // Import routes (single place, no duplicates)
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const goalRoutes = require('./routes/goals');
 const adminRoutes = require('./routes/admin');
+const profileRoutes = require('./routes/profile');
 
 // Middleware
 app.use(helmet());  // Security headers
-app.use(cors({ origin: true }));  // Allow all origins for dev (fix CORS for any port)
+app.use(cors({ origin: 'http://localhost:5173' }));  // Allow frontend port (fix CORS)
 app.use(express.json({ limit: '10mb' }));  // Parse JSON bodies
 
 // Mount routes (single place, no duplicates)
@@ -26,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Test route for debugging
 app.get('/test', (req, res) => res.json({ message: 'Server OK' }));
@@ -41,11 +42,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const profileRoutes = require('./routes/profile');
-app.use('/api/profile', profileRoutes);
-
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log('Routes loaded: auth, transactions, goals, admin');
+  console.log('Routes loaded: auth, transactions, goals, admin, profile');
 });
