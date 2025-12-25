@@ -10,22 +10,27 @@ const getAllByUser = async (userId) => {
 
 const createGoal = async (userId, category, targetAmount) => {
   const [result] = await pool.execute(
-    'INSERT INTO goals (user_id, category, target_amount, current_amount) VALUES (?, ?, ?, 0)',
+    `INSERT INTO goals (user_id, category, target_amount, current_amount)
+     VALUES (?, ?, ?, 0)`,
     [userId, category, targetAmount]
   );
-  return result.insertId;
+
+  return {
+    id: result.insertId,
+    user_id: userId,
+    category,
+    target_amount: targetAmount,
+    current_amount: 0
+  };
 };
 
-const updateGoal = async (goalId, currentAmount) => {
-  if (typeof currentAmount !== 'number') {
-    throw new Error('currentAmount must be a number');
-  }
-
+const updateGoal = async (goalId, targetAmount) => {
   await pool.execute(
-    'UPDATE goals SET current_amount = ? WHERE id = ?',
-    [currentAmount, goalId]
+    'UPDATE goals SET target_amount = ? WHERE id = ?',
+    [targetAmount, goalId]
   );
 };
+
 
 const deleteGoal = async (goalId) => {
   if (!goalId) {
@@ -38,10 +43,28 @@ const deleteGoal = async (goalId) => {
   );
 };
 
+const getHistoricalByCategory = async (userId, category) => {
+  const [rows] = await pool.execute(
+    `
+    SELECT 
+      DATE_FORMAT(t.createdAt, '%Y-%m') AS month,
+      SUM(t.amount) AS actual
+    FROM transactions t
+    WHERE t.userId = ? AND t.category = ?
+    GROUP BY month
+    ORDER BY month
+    `,
+    [userId, category]
+  );
+
+  return rows;
+};
+
 
 module.exports = {
   getAllByUser,
   createGoal,
   updateGoal,
-  deleteGoal
+  deleteGoal,
+  getHistoricalByCategory
 };

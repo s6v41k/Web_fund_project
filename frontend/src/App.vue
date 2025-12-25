@@ -18,7 +18,13 @@ import { Toaster } from 'vue-sonner';  // Correct import for Toaster component
       <router-view />
     </main>
     <!-- Sonner Toaster for global toast notifications -->
-    <Toaster />
+    <Toaster 
+      position="top-right"
+      rich-colors
+      close-button
+      offset="72"
+    />
+
   </div>
 </template>
 

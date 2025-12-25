@@ -54,7 +54,15 @@
             <div class="flex justify-between items-center">
               <div>
                 <p class="font-semibold text-gray-900">{{ goal.category }}: €{{ goal.current_amount.toFixed(2) }} / €{{ goal.target_amount }}</p>
-                <p class="text-sm text-gray-600">Progress: {{ Math.min((goal.current_amount / goal.target_amount * 100), 100).toFixed(1) }}%</p>
+                <p class="text-sm text-gray-600">
+                  Progress:
+                  {{
+                    goal.target_amount > 0
+                      ? Math.min((goal.current_amount / goal.target_amount) * 100, 100).toFixed(1) + '%'
+                      : 'Not started'
+                  }}
+
+                </p>
               </div>
               <div class="space-x-2">
                 <button @click="editGoal(goal)" class="text-blue-500 hover:underline text-sm">Edit</button>
@@ -63,11 +71,24 @@
               </div>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div class="bg-green-600 h-2 rounded-full" :style="{ width: Math.min((goal.current_amount / goal.target_amount * 100), 100) + '%' }"></div>
+              <div
+                class="bg-green-600 h-2 rounded-full"
+                :style="{
+                  width:
+                    goal.target_amount > 0
+                      ? Math.min((goal.current_amount / goal.target_amount) * 100, 100) + '%'
+                      : '0%'
+                }"
+
+              ></div>
             </div>
           </div>
         </div>
-        <p v-else class="p-4 text-gray-500 text-center">No goals yet. Add one above!</p>
+
+        <p v-if="!goals.length" class="p-4 text-gray-500 text-center">
+        No goals yet. Add one above!
+        </p>
+
       </div>
 
       <!-- Historical Chart (line for progress over months, shown on click) -->
@@ -89,6 +110,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 import { useUserStore } from '../stores/user';
 import { Line } from 'vue-chartjs';
 import {
@@ -187,9 +209,13 @@ const handleSubmit = async () => {
   try {
     const token = localStorage.getItem('token');
     const data = {
-      category: form.value.category === 'custom' ? form.value.customCategory : form.value.category,
-      target_amount: parseFloat(form.value.target_amount)
+      category:
+        form.value.category === 'custom'
+          ? form.value.customCategory.trim()
+          : form.value.category,
+      target_amount: Number(form.value.target_amount)
     };
+
     if (editingId.value) {
       await axios.put(`http://localhost:5000/api/goals/${editingId.value}`, data, {
         headers: { Authorization: `Bearer ${token}` }
@@ -223,27 +249,37 @@ const cancelEdit = () => {
 
 // Delete goal
 const deleteGoal = async (id) => {
-  if (!confirm('Delete this goal?')) return;
   try {
     const token = localStorage.getItem('token');
     await axios.delete(`http://localhost:5000/api/goals/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    toast.success('Goal deleted');
     await fetchGoals();
   } catch (err) {
-    error.value = err.response?.data?.error || 'Failed to delete';
+    toast.error('Failed to delete goal');
   }
 };
+
 
 // View historical chart
 const viewHistorical = async (category) => {
   historicalCategory.value = category;
   showHistorical.value = true;
+  historicalData.value = { labels: [], datasets: [] };
+
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get(`http://localhost:5000/api/goals/historical/${category}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await axios.get(
+      `http://localhost:5000/api/goals/historical/${encodeURIComponent(category)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!res.data.length) {
+      toast.info('No historical data yet');
+      return;
+    }
+
     historicalData.value = {
       labels: res.data.map(d => d.month),
       datasets: [{
@@ -254,10 +290,11 @@ const viewHistorical = async (category) => {
         tension: 0.1
       }]
     };
-  } catch (err) {
-    console.error('Failed to fetch historical');
+  } catch {
+    toast.error('Failed to load history');
   }
 };
+
 
 // Close historical
 const closeHistorical = () => {

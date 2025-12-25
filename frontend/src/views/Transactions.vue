@@ -114,10 +114,24 @@
               <td class="p-2">{{ t.category }}</td>
               <td class="p-2">{{ t.description }}</td>
               <td class="p-2">{{ formatDate(t.createdAt) }}</td>
-              <td class="p-2 space-x-2">
-                <button @click="editTransaction(t)" class="text-blue-500">Edit</button>
-                <button @click="deleteTransaction(t.id)" class="text-red-500">Delete</button>
+              <td class="p-2 flex gap-3">
+                <button
+                  type="button"
+                  class="text-blue-600 hover:underline cursor-pointer"
+                  @click.stop="editTransaction(t)"
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  class="text-red-600 hover:underline cursor-pointer"
+                  @click.stop="deleteTransaction(t.id)"
+                >
+                  Delete
+                </button>
               </td>
+
             </tr>
           </tbody>
         </table>
@@ -136,7 +150,7 @@ import axios from 'axios'
 import moment from 'moment'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
-
+import { toast } from 'vue-sonner'
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -215,20 +229,26 @@ async function handleSubmit() {
     const payload = {
       amount: Number(form.value.amount),
       category: form.value.category,
-      description: form.value.description,
-      date: form.value.date
+      description: form.value.description
     }
 
     if (editingId.value) {
-      await axios.put(`http://localhost:5000/api/transactions/${editingId.value}`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await axios.put(
+        `http://localhost:5000/api/transactions/${editingId.value}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
     } else {
-      await axios.post('http://localhost:5000/api/transactions', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await axios.post(
+        'http://localhost:5000/api/transactions',
+        {
+          ...payload,
+          date: form.value.date
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
     }
-    
+
     editingId.value = null
     form.value = { amount:'', category:'', description:'', date:'' }
     await fetchTransactions()
@@ -238,6 +258,8 @@ async function handleSubmit() {
     error.value = 'Failed to save transaction'
   }
 }
+
+
 
 
 function editTransaction(t) {
@@ -256,11 +278,32 @@ function cancelEdit() {
 }
 
 async function deleteTransaction(id) {
-  if (!confirm('Delete?')) return
-  const token = localStorage.getItem('token')
-  await axios.delete(`http://localhost:5000/api/transactions/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-  await fetchTransactions()
+  try {
+    const token = localStorage.getItem('token')
+
+    if (!id) {
+      alert('NO ID')
+      return
+    }
+
+    await axios.delete(
+      `http://localhost:5000/api/transactions/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    transactions.value = transactions.value.filter(t => t.id !== id)
+
+    alert('DELETED')
+  } catch (err) {
+    alert('DELETE ERROR')
+    console.error(err)
+  }
 }
+
+
+
 </script>

@@ -102,7 +102,12 @@
               €{{ goal.current_amount.toFixed(2) }} /
               €{{ goal.target_amount }}
               (
-              {{ goal.target_amount > 0 ? goal.percentage.toFixed(0) + '%' : 'Not started' }}
+              ({{
+                goal.target_amount > 0 && Number.isFinite(goal.percentage)
+                  ? goal.percentage.toFixed(0) + '%'
+                  : 'Not started'
+              }})
+
               )
 
               <span v-if="goal.percentage >= 90 && goal.percentage <= 100" class="ml-2 text-yellow-500 text-sm">⚠️ Alert: Close to limit!</span>
@@ -229,7 +234,7 @@ onMounted(async () => {
   target_amount: Number(g.target_amount) || 0
 }));
 
-    await updateGoalAmounts();
+    //await updateGoalAmounts();
     extractYears();
   } catch (err) {
     error.value = err.response?.data?.error || 'Failed to fetch data';
@@ -243,8 +248,9 @@ onMounted(async () => {
 const extractYears = () => {
   const yearSet = new Set();
   transactions.value.forEach(t => {
-    const date = new Date(t.createdAt);
-    yearSet.add(date.getFullYear());
+    const year = new Date(t.createdAt).getFullYear();
+    if (!Number.isNaN(year)) yearSet.add(year);
+
   });
   years.value = Array.from(yearSet).sort((a, b) => b - a);  // Latest first
 };
