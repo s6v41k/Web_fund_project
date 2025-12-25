@@ -53,7 +53,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '../services/axios';
 import { useUserStore } from '../stores/user';
 
 const router = useRouter();
@@ -131,9 +131,9 @@ const handleSubmit = async () => {
 
   try {
     const endpoint = isRegister.value ? '/register' : '/login';
-    const res = await axios.post(`http://localhost:5000/api/auth${endpoint}`, form);
+    const res = await api.post(`/auth${endpoint}`, form);
     localStorage.setItem('token', res.data.token);  // Save token
-    userStore.setUser(res.data.userId);  // Update store
+    userStore.setUser(res.data.userId, res.data.token);  // Update store
     router.push('/dashboard');  // Redirect to dashboard
   } catch (err) {
     const status = err.response?.status;
@@ -172,7 +172,7 @@ const handleForgot = async () => {
   loading.value = true;
 
   try {
-    await axios.post('http://localhost:5000/api/auth/forgot-password', { email: form.email });
+    await api.post('/auth/forgot-password', { email: form.email });
     errors.value.general = 'Reset email sent. Check your inbox.';
   } catch (err) {
     errors.value.general = err.response?.data?.error || 'Failed to send reset email';

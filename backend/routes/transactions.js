@@ -56,7 +56,7 @@ router.put('/:id', auth, async (req, res) => {
     const { error } = transactionSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
     const { amount, category, description } = req.body;
-    await update(req.params.id, amount, category, description);
+    await update(req.params.id, req.userId, amount, category, description);
     res.json({ message: 'Updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -66,7 +66,7 @@ router.put('/:id', auth, async (req, res) => {
 // DELETE /api/transactions/:id - Delete
 router.delete('/:id', auth, async (req, res) => {
   try {
-    await remove(req.params.id);
+    await remove(req.params.id, req.userId);
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -18,7 +18,11 @@ const profileRoutes = require('./routes/profile');
 
 // Middleware
 app.use(helmet());  // Security headers
-app.use(cors({ origin: 'http://localhost:5173' }));  // Allow frontend port (fix CORS)
+app.use(cors({ 
+  origin: true,
+  credentials: true
+}));
+  
 app.use(express.json({ limit: '10mb' }));  // Parse JSON bodies
 
 // Mount routes (single place, no duplicates)
