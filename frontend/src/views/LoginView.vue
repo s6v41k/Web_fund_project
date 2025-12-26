@@ -134,7 +134,13 @@ const handleSubmit = async () => {
     const res = await api.post(`/auth${endpoint}`, form);
     localStorage.setItem('token', res.data.token);  // Save token
     userStore.setUser(res.data.userId, res.data.token);  // Update store
-    router.push('/dashboard');  // Redirect to dashboard
+
+    // Redirect based on role
+    if (res.data.role === 'admin') {
+      router.push('/admin');  // Admin goes to admin panel
+    } else {
+      router.push('/dashboard');  // Regular user goes to dashboard
+    }
   } catch (err) {
     const status = err.response?.status;
     const backendError = err.response?.data?.error;

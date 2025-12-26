@@ -1,5 +1,7 @@
 <template>
   <div class="p-6 max-w-2xl mx-auto">
+    <Toaster position="top-right" :richColors="true" />
+
     <h1 class="text-3xl font-bold mb-6 text-gray-900">Profile</h1>
 
     <div v-if="loading" class="text-center">Loading...</div>
@@ -25,13 +27,16 @@
 
         <div class="flex items-center gap-6">
           <img
-            v-if="avatarPreview || profile.avatar"
-            :src="avatarPreview || backendUrl + profile.avatar"
+            v-if="avatarPreview || profile.avatar || profile.photo"
+            :src="avatarPreview || backendUrl + (profile.avatar || profile.photo)"
             class="w-28 h-28 rounded-full object-cover border"
           />
+          <div v-else class="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center border">
+            <span class="text-gray-400 text-sm">No photo</span>
+          </div>
 
           <div class="space-y-2">
-            <input type="file" accept="image/*" @change="onAvatarSelect" />
+            <input type="file" accept="image/*" @change="onAvatarSelect" class="text-sm" />
 
             <div class="flex gap-2">
               <button
@@ -43,7 +48,7 @@
               </button>
 
               <button
-                v-if="profile.avatar"
+                v-if="profile.avatar || profile.photo"
                 @click="deleteAvatar"
                 class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
@@ -140,13 +145,37 @@
         </button>
 
         <button
-          @click="deleteAccount"
+          @click="showDeleteModal = true"
           class="bg-red-700 text-white px-4 py-2 rounded hover:bg-red-800 w-full"
         >
           Delete Account
         </button>
       </section>
 
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Delete Account</h2>
+        <p class="mb-6 text-gray-700">
+          Are you sure you want to delete your account? This action is <strong>permanent</strong> and cannot be undone. All your data will be lost.
+        </p>
+        <div class="flex gap-3">
+          <button
+            @click="showDeleteModal = false"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDeleteAccount"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Yes, Delete
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -156,7 +185,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useUserStore } from '../stores/user';
-import { toast } from 'vue-sonner';
+import { toast, Toaster } from 'vue-sonner';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -171,6 +200,7 @@ const passwordForm = ref({ currentPassword: '', newPassword: '' });
 
 const avatarFile = ref(null);
 const avatarPreview = ref(null);
+const showDeleteModal = ref(false);
 
 onMounted(async () => {
   if (!userStore.isAuthenticated()) {
@@ -295,16 +325,23 @@ const deleteNickname = async () => {
   toast.success('Nickname removed');
 };
 
-const deleteAccount = async () => {
-  if (!confirm('Delete account permanently?')) return;
+const confirmDeleteAccount = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    await axios.delete(`${backendUrl}/api/profile/account`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  const token = localStorage.getItem('token');
-  await axios.delete(`${backendUrl}/api/profile/account`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+    showDeleteModal.value = false;
+    toast.success('Account deleted successfully');
 
-  userStore.logout();
-  router.push('/login');
+    setTimeout(() => {
+      userStore.logout();
+      router.push('/login');
+    }, 1500);
+  } catch (err) {
+    toast.error(err.response?.data?.error || 'Failed to delete account');
+  }
 };
 
 const logout = () => {

@@ -115,7 +115,12 @@ router.post('/login', async (req, res) => {
 
     // Allow login without verification (as per your request)
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, userId: user.id, verified: user.verified || false });  // Add verified status
+    res.json({
+      token,
+      userId: user.id,
+      verified: user.verified || false,
+      role: (user.role || 'user').toLowerCase()  // Normalize to lowercase
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });

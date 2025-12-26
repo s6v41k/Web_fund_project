@@ -147,6 +147,27 @@ const updateNickname = async (userId, nickname) => {
   );
 };
 
+const updateUserEmail = async (userId, email) => {
+  await pool.execute(
+    'UPDATE users SET email = ? WHERE id = ?',
+    [email, userId]
+  );
+};
+
+const updateUserPhoto = async (userId, photo) => {
+  await pool.execute(
+    'UPDATE users SET photo = ? WHERE id = ?',
+    [photo, userId]
+  );
+};
+
+const deleteUser = async (userId) => {
+  await pool.execute(
+    'DELETE FROM users WHERE id = ?',
+    [userId]
+  );
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -155,5 +176,8 @@ module.exports = {
   updateUserRole,
   updateUserPassword,
   getUserById,
-  updateNickname
+  updateNickname,
+  updateUserEmail,
+  updateUserPhoto,
+  deleteUser
 };

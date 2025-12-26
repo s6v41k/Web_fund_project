@@ -1,6 +1,8 @@
 <!-- src/views/Transactions.vue -->
 <template>
   <div class="p-6">
+    <Toaster position="top-right" :richColors="true" />
+
     <h1 class="text-3xl font-bold mb-4 text-gray-900">Transactions</h1>
 
     <div v-if="loading" class="text-center text-blue-500">Loading...</div>
@@ -48,13 +50,24 @@
             required
           />
 
-          <input
+          <select
             v-model="form.category"
-            type="text"
-            placeholder="Category"
             class="border p-2 rounded w-full"
             required
-          />
+          >
+            <option value="" disabled>Select Category</option>
+            <option value="food">Food</option>
+            <option value="transport">Transport</option>
+            <option value="shopping">Shopping</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="bills">Bills</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="groceries">Groceries</option>
+            <option value="rent">Rent</option>
+            <option value="utilities">Utilities</option>
+            <option value="travel">Travel</option>
+            <option value="income">Income</option>
+          </select>
 
           <input
             v-model="form.description"
@@ -126,7 +139,7 @@
                 <button
                   type="button"
                   class="text-red-600 hover:underline cursor-pointer"
-                  @click.stop="deleteTransaction(t.id)"
+                  @click.stop="openDeleteModal(t)"
                 >
                   Delete
                 </button>
@@ -141,6 +154,32 @@
         </p>
       </div>
     </div>
+
+    <!-- Delete Transaction Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Delete Transaction</h2>
+        <p class="mb-6 text-gray-700">
+          Are you sure you want to delete this transaction?
+          <br><strong>{{ transactionToDelete?.category }}</strong> - {{ transactionToDelete?.amount }} €
+          <br>This action cannot be undone.
+        </p>
+        <div class="flex gap-3">
+          <button
+            @click="closeDeleteModal"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDeleteTransaction"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -150,7 +189,7 @@ import axios from 'axios'
 import moment from 'moment'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
-import { toast } from 'vue-sonner'
+import { toast, Toaster } from 'vue-sonner'
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -158,6 +197,8 @@ const transactions = ref([])
 const loading = ref(true)
 const error = ref('')
 const editingId = ref(null)
+const showDeleteModal = ref(false)
+const transactionToDelete = ref(null)
 
 const form = ref({
   amount: '',
@@ -196,8 +237,14 @@ function extractFilters() {
   const c = new Set()
 
   transactions.value.forEach(t => {
-    const d = new Date(t.createdAt)
-    y.add(d.getFullYear())
+    const dateValue = t.createdAt || t.date
+
+    if (dateValue) {
+      const d = new Date(dateValue)
+      if (!isNaN(d.getTime())) {
+        y.add(d.getFullYear())
+      }
+    }
     c.add(t.category)
   })
 
@@ -207,12 +254,23 @@ function extractFilters() {
 
 const filteredTransactions = computed(() => {
   return transactions.value.filter(t => {
-    const d = new Date(t.createdAt)
-    return (
-      (!selectedYear.value || d.getFullYear() == selectedYear.value) &&
-      (!selectedMonth.value || d.toLocaleString('en',{month:'short'}) === selectedMonth.value) &&
-      (!selectedCategory.value || t.category === selectedCategory.value)
-    )
+    // Handle both createdAt and date fields
+    const dateValue = t.createdAt || t.date
+    if (!dateValue) return false
+
+    const d = new Date(dateValue)
+
+    // Check if date is valid
+    if (isNaN(d.getTime())) return false
+
+    const year = d.getFullYear()
+    const month = d.toLocaleString('en', {month:'short'})
+
+    const yearMatch = !selectedYear.value || year == selectedYear.value
+    const monthMatch = !selectedMonth.value || month === selectedMonth.value
+    const categoryMatch = !selectedCategory.value || t.category === selectedCategory.value
+
+    return yearMatch && monthMatch && categoryMatch
   })
 })
 
@@ -238,6 +296,7 @@ async function handleSubmit() {
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       )
+      toast.success('Transaction updated successfully')
     } else {
       await axios.post(
         'http://localhost:5000/api/transactions',
@@ -247,15 +306,18 @@ async function handleSubmit() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       )
+      toast.success('Transaction added successfully')
     }
 
     editingId.value = null
     form.value = { amount:'', category:'', description:'', date:'' }
     await fetchTransactions()
+    // Update filters after adding/updating transaction
+    extractFilters()
 
   } catch (err) {
     console.error(err)
-    error.value = 'Failed to save transaction'
+    toast.error('Failed to save transaction')
   }
 }
 
@@ -277,17 +339,30 @@ function cancelEdit() {
   form.value = { amount:'', category:'', description:'', date:'' }
 }
 
-async function deleteTransaction(id) {
+// Open delete modal
+function openDeleteModal(transaction) {
+  transactionToDelete.value = transaction
+  showDeleteModal.value = true
+}
+
+// Close delete modal
+function closeDeleteModal() {
+  transactionToDelete.value = null
+  showDeleteModal.value = false
+}
+
+// Confirm delete transaction
+async function confirmDeleteTransaction() {
   try {
     const token = localStorage.getItem('token')
 
-    if (!id) {
-      alert('NO ID')
+    if (!transactionToDelete.value?.id) {
+      toast.error('Transaction ID not found')
       return
     }
 
     await axios.delete(
-      `http://localhost:5000/api/transactions/${id}`,
+      `http://localhost:5000/api/transactions/${transactionToDelete.value.id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -295,15 +370,17 @@ async function deleteTransaction(id) {
       }
     )
 
-    transactions.value = transactions.value.filter(t => t.id !== id)
+    transactions.value = transactions.value.filter(t => t.id !== transactionToDelete.value.id)
 
-    alert('DELETED')
+    closeDeleteModal()
+    toast.success('Transaction deleted successfully')
+
+    // Update filters after deletion
+    extractFilters()
   } catch (err) {
-    alert('DELETE ERROR')
+    toast.error('Failed to delete transaction')
     console.error(err)
   }
 }
-
-
 
 </script>

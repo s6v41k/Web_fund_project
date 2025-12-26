@@ -445,7 +445,7 @@ router.put('/password', auth, async (req, res) => {
 ======================= */
 router.get('/', auth, async (req, res) => {
   const [rows] = await pool.execute(
-    'SELECT id, email, nickname, avatar FROM users WHERE id = ?',
+    'SELECT id, email, nickname, avatar, photo FROM users WHERE id = ?',
     [req.userId]
   );
 
@@ -550,6 +550,22 @@ router.delete('/avatar', auth, async (req, res) => {
   );
 
   res.json({ message: 'Avatar removed' });
+});
+
+/* =======================
+   DELETE ACCOUNT
+======================= */
+router.delete('/account', auth, async (req, res) => {
+  try {
+    await pool.execute(
+      'DELETE FROM users WHERE id = ?',
+      [req.userId]
+    );
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
 });
 
 module.exports = router;
