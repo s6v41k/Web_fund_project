@@ -30,9 +30,6 @@
           </select>
         </div>
 
-        <button @click="applyFilter" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
-          Apply Filter
-        </button>
       </div>
 
       <!-- Form -->
@@ -254,13 +251,10 @@ function extractFilters() {
 
 const filteredTransactions = computed(() => {
   return transactions.value.filter(t => {
-    // Handle both createdAt and date fields
     const dateValue = t.createdAt || t.date
     if (!dateValue) return false
 
     const d = new Date(dateValue)
-
-    // Check if date is valid
     if (isNaN(d.getTime())) return false
 
     const year = d.getFullYear()
@@ -273,8 +267,6 @@ const filteredTransactions = computed(() => {
     return yearMatch && monthMatch && categoryMatch
   })
 })
-
-function applyFilter() {}
 
 function formatDate(d) {
   return moment(d).format('MMM DD, YYYY')
@@ -312,11 +304,9 @@ async function handleSubmit() {
     editingId.value = null
     form.value = { amount:'', category:'', description:'', date:'' }
     await fetchTransactions()
-    // Update filters after adding/updating transaction
     extractFilters()
 
-  } catch (err) {
-    console.error(err)
+  } catch {
     toast.error('Failed to save transaction')
   }
 }
@@ -339,19 +329,16 @@ function cancelEdit() {
   form.value = { amount:'', category:'', description:'', date:'' }
 }
 
-// Open delete modal
 function openDeleteModal(transaction) {
   transactionToDelete.value = transaction
   showDeleteModal.value = true
 }
 
-// Close delete modal
 function closeDeleteModal() {
   transactionToDelete.value = null
   showDeleteModal.value = false
 }
 
-// Confirm delete transaction
 async function confirmDeleteTransaction() {
   try {
     const token = localStorage.getItem('token')
@@ -374,12 +361,9 @@ async function confirmDeleteTransaction() {
 
     closeDeleteModal()
     toast.success('Transaction deleted successfully')
-
-    // Update filters after deletion
     extractFilters()
   } catch (err) {
     toast.error('Failed to delete transaction')
-    console.error(err)
   }
 }
 
